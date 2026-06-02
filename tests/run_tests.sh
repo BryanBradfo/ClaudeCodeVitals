@@ -21,6 +21,16 @@ source "$SL"
 out="$(run_sl '')"
 assert_eq "$out" "Claude" "empty stdin prints Claude"
 
+# ---- Task 2: bars ----
+assert_eq "$(bar_fill 0)"   "0" "bar_fill 0 -> 0"
+assert_eq "$(bar_fill 8)"   "1" "bar_fill 8 -> 1 (min-1 rule)"
+assert_eq "$(bar_fill 50)"  "2" "bar_fill 50 -> 2 (rounding)"
+assert_eq "$(bar_fill 76)"  "2" "bar_fill 76 -> 2"
+assert_eq "$(bar_fill 93)"  "3" "bar_fill 93 -> 3"
+assert_eq "$(bar_fill 100)" "3" "bar_fill 100 -> 3"
+bar_out="$(make_bar 50 | strip)"
+assert_eq "$bar_out" "▰▰▱" "make_bar 50 renders 2 filled, 1 empty"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

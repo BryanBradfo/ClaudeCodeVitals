@@ -33,6 +33,27 @@ CACHE_MAX_AGE=60
 # Append a segment to OUT, inserting SEP when OUT is non-empty.
 add() { [ -n "$OUT" ] && OUT+="$SEP"; OUT+="$1"; }
 
+# Filled-cell count for a percentage (0..BAR_WIDTH), min 1 cell for any usage > 0.
+bar_fill() {
+    local p=$1 w=$BAR_WIDTH f
+    f=$(( (p * w + 50) / 100 ))
+    [ "$p" -gt 0 ] && [ "$f" -eq 0 ] && f=1
+    [ "$f" -gt "$w" ] && f=$w
+    echo "$f"
+}
+
+# Render a colored bar for a percentage.
+make_bar() {
+    local p=$1 f i col
+    f=$(bar_fill "$p")
+    col=$(level_color "$(usage_level "$p")")
+    printf '%s' "$col"
+    for ((i=0; i<f; i++)); do printf '%s' "$BAR_FILLED"; done
+    printf '%s' "$C_DIM"
+    for ((i=f; i<BAR_WIDTH; i++)); do printf '%s' "$BAR_EMPTY"; done
+    printf '%s' "$C_RESET"
+}
+
 # ===== MAIN =====
 main() {
     set -f  # disable globbing
