@@ -116,6 +116,31 @@ make_bar() {
     printf '%s' "$C_RESET"
 }
 
+# One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
+parse_input() {
+    local assigns
+    assigns=$(printf '%s' "$INPUT" | jq -r '
+        "MODEL=\(.model.display_name // "Claude" | @sh)",
+        "CWD=\(.cwd // "" | @sh)",
+        "SESSION_NAME=\(.session_name // "" | @sh)",
+        "SESSION_ID=\(.session_id // "" | @sh)",
+        "CTX_PCT=\(((.context_window.used_percentage) // (((.context_window.current_usage.input_tokens // 0) + (.context_window.current_usage.cache_creation_input_tokens // 0) + (.context_window.current_usage.cache_read_input_tokens // 0)) * 100 / (.context_window.context_window_size // 200000))) | floor | @sh)",
+        "CTX_SIZE=\(.context_window.context_window_size // 200000 | @sh)",
+        "CTX_INPUT=\(.context_window.current_usage.input_tokens // 0 | @sh)",
+        "CTX_CC=\(.context_window.current_usage.cache_creation_input_tokens // 0 | @sh)",
+        "CTX_CR=\(.context_window.current_usage.cache_read_input_tokens // 0 | @sh)",
+        "EFFORT=\(.effort.level // "" | @sh)",
+        "FH_PCT=\(.rate_limits.five_hour.used_percentage // "" | @sh)",
+        "FH_RESET=\(.rate_limits.five_hour.resets_at // "" | @sh)",
+        "SD_PCT=\(.rate_limits.seven_day.used_percentage // "" | @sh)",
+        "SD_RESET=\(.rate_limits.seven_day.resets_at // "" | @sh)",
+        "PR_NUM=\(.pr.number // "" | @sh)",
+        "PR_STATE=\(.pr.review_state // "" | @sh)",
+        "COST=\(.cost.total_cost_usd // "" | @sh)"
+    ' 2>/dev/null)
+    eval "$assigns"
+}
+
 # ===== MAIN =====
 main() {
     set -f  # disable globbing

@@ -64,6 +64,22 @@ assert_eq "$(fmt_reset '' time)"           ""             "empty -> empty"
 assert_eq "$(fmt_reset null time)"         ""             "null -> empty"
 assert_eq "$(TZ=UTC fmt_reset '1970-01-01T00:00:00Z' time)" "00:00" "ISO string accepted"
 
+# ---- Task 8: parse_input ----
+INPUT='{"model":{"display_name":"Opus 4.8 (1M context)"},"cwd":"/x/y","session_name":"demo","session_id":"abcd1234efgh","context_window":{"used_percentage":42.7,"context_window_size":1000000,"current_usage":{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":30}},"effort":{"level":"high"},"rate_limits":{"five_hour":{"used_percentage":12,"resets_at":0},"seven_day":{"used_percentage":34,"resets_at":0}},"pr":{"number":142,"review_state":"pending"},"cost":{"total_cost_usd":1.27}}'
+parse_input
+assert_eq "$MODEL"    "Opus 4.8 (1M context)" "MODEL parsed"
+assert_eq "$CWD"      "/x/y"                   "CWD parsed"
+assert_eq "$SESSION_NAME" "demo"               "SESSION_NAME parsed"
+assert_eq "$CTX_PCT"  "42"                      "CTX_PCT floored from 42.7"
+assert_eq "$EFFORT"   "high"                    "EFFORT parsed"
+assert_eq "$FH_PCT"   "12"                      "FH_PCT parsed"
+assert_eq "$PR_NUM"   "142"                     "PR_NUM parsed"
+assert_eq "$COST"     "1.27"                    "COST parsed"
+# Fallback: no used_percentage -> compute from tokens (60 / 200000 -> 0)
+INPUT='{"context_window":{"context_window_size":200000,"current_usage":{"input_tokens":100000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}'
+parse_input
+assert_eq "$CTX_PCT"  "50"                      "CTX_PCT computed when used_percentage absent"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
