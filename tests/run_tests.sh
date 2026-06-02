@@ -51,6 +51,11 @@ assert_eq "$(fmt_tokens 79000)"   "79k"  "79000 -> 79k"
 assert_eq "$(fmt_tokens 1000000)" "1M"   "1000000 -> 1M"
 assert_eq "$(fmt_tokens 1500000)" "1.5M" "1500000 -> 1.5M"
 
+# ---- Task 6: fmt_session ----
+assert_eq "$(fmt_session 'refactor-auth' 'a3f9c1e2-dead-beef')" "refactor-auth" "name wins"
+assert_eq "$(fmt_session '' 'a3f9c1e2-dead-beef')"              "a3f9c1e2"      "no name -> short id"
+assert_eq "$(fmt_session '' '')"                                ""              "neither -> empty"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

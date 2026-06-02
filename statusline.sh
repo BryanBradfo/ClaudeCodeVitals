@@ -42,6 +42,12 @@ bar_fill() {
     echo "$f"
 }
 
+# Session label: name if set, else first 8 chars of id, else empty.
+fmt_session() {
+    local name=$1 id=$2
+    if [ -n "$name" ]; then printf '%s' "$name"; else printf '%s' "${id:0:8}"; fi
+}
+
 # Format a token count: 500, 79k, 1M, 1.5M. Uppercase M, lowercase k.
 fmt_tokens() {
     local n=$1
