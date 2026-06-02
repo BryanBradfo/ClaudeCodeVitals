@@ -188,6 +188,22 @@ seg_context() {
     add "$s"
 }
 
+# Reasoning effort, color-coded. medium displays as "med". Defaults to medium.
+seg_effort() {
+    [ "$SEG_EFFORT" = 1 ] || return
+    local e="${EFFORT:-medium}" label col
+    label="$e"
+    case "$e" in
+        low)    col=$C_DIM ;;
+        medium) col=$C_ORANGE; label=med ;;
+        high)   col=$C_GREEN ;;
+        xhigh)  col=$C_PURPLE ;;
+        max)    col=$C_RED ;;
+        *)      col=$C_GREEN ;;
+    esac
+    add "${C_WHITE}effort${C_RESET} ${col}${label}${C_RESET}"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns

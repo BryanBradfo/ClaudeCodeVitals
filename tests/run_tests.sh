@@ -133,6 +133,14 @@ OUT=""; CTX_PCT=93; CTX_SIZE=1000000; CTX_INPUT=930000; CTX_CC=0; CTX_CR=0; seg_
 c="$(printf '%s' "$OUT" | strip)"
 assert_contains "$c" "$CTX_WARN_GLYPH" "warning at >90%"
 
+# ---- Task 14: seg_effort ----
+OUT=""; EFFORT="high"; seg_effort
+assert_eq "$(printf '%s' "$OUT" | strip)" "effort high" "high effort"
+OUT=""; EFFORT="medium"; seg_effort
+assert_eq "$(printf '%s' "$OUT" | strip)" "effort med" "medium -> med"
+OUT=""; EFFORT=""; seg_effort
+assert_eq "$(printf '%s' "$OUT" | strip)" "effort med" "empty -> default med"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
