@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# ClaudeCodeVitals — a Claude Code status line.
+# Source: (your repo URL)  | Inspired by daniel3303/ClaudeCodeStatusLine (MIT)
+
+# ===== CONFIG =====
+# Palette (truecolor). $'...' embeds real ESC bytes so no printf %b is needed.
+C_BLUE=$'\033[38;2;0;153;255m';   C_ORANGE=$'\033[38;2;255;176;85m'
+C_GREEN=$'\033[38;2;0;160;0m';    C_CYAN=$'\033[38;2;46;149;153m'
+C_RED=$'\033[38;2;255;85;85m';    C_YELLOW=$'\033[38;2;230;200;0m'
+C_PURPLE=$'\033[38;2;167;139;250m'; C_WHITE=$'\033[38;2;220;220;220m'
+C_DIM=$'\033[2m';                 C_RESET=$'\033[0m'
+
+# Bars
+BAR_WIDTH=3
+BAR_FILLED='▰'
+BAR_EMPTY='▱'
+
+# Misc
+SEP=" ${C_DIM}·${C_RESET} "
+SESSION_MARK='»'
+CTX_WARN_THRESHOLD=90
+CTX_WARN_GLYPH='⚠'
+
+# Segment toggles (1=on, 0=off). All on by default.
+SEG_MODEL=1; SEG_SESSION=1; SEG_GIT=1; SEG_PR=1; SEG_CONTEXT=1
+SEG_EFFORT=1; SEG_LIMITS=1; SEG_EXTRA=1; SEG_COST=1
+
+# Cache (overridable for tests)
+CCV_CACHE_DIR="${CCV_CACHE_DIR:-/tmp/claude}"
+CACHE_MAX_AGE=60
+
+# ===== HELPERS =====
+# Append a segment to OUT, inserting SEP when OUT is non-empty.
+add() { [ -n "$OUT" ] && OUT+="$SEP"; OUT+="$1"; }
+
+# ===== MAIN =====
+main() {
+    set -f  # disable globbing
+    INPUT=$(cat)
+    if [ -z "$INPUT" ]; then printf 'Claude'; exit 0; fi
+    printf 'Claude'  # placeholder; replaced in Task 18
+}
+
+# Run main only when executed directly, not when sourced by tests.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main; fi
