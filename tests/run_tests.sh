@@ -45,6 +45,12 @@ assert_eq "$(accent_level 'Sonnet 4.6')"            "sonnet"  "Sonnet -> sonnet"
 assert_eq "$(accent_level 'Haiku 4.5')"             "haiku"   "Haiku -> haiku"
 assert_eq "$(accent_level 'Claude')"                "default" "unknown -> default"
 
+# ---- Task 5: fmt_tokens ----
+assert_eq "$(fmt_tokens 500)"     "500"  "500 -> 500"
+assert_eq "$(fmt_tokens 79000)"   "79k"  "79000 -> 79k"
+assert_eq "$(fmt_tokens 1000000)" "1M"   "1000000 -> 1M"
+assert_eq "$(fmt_tokens 1500000)" "1.5M" "1500000 -> 1.5M"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

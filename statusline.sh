@@ -42,6 +42,18 @@ bar_fill() {
     echo "$f"
 }
 
+# Format a token count: 500, 79k, 1M, 1.5M. Uppercase M, lowercase k.
+fmt_tokens() {
+    local n=$1
+    if [ "$n" -ge 1000000 ]; then
+        LC_NUMERIC=C awk "BEGIN{v=$n/1000000; if(v==int(v)) printf \"%dM\", v; else printf \"%.1fM\", v}"
+    elif [ "$n" -ge 1000 ]; then
+        LC_NUMERIC=C awk "BEGIN{printf \"%.0fk\", $n/1000}"
+    else
+        printf '%d' "$n"
+    fi
+}
+
 # Classify a model display name into a color family.
 accent_level() {
     case "$1" in
