@@ -42,6 +42,16 @@ bar_fill() {
     echo "$f"
 }
 
+# Classify a model display name into a color family.
+accent_level() {
+    case "$1" in
+        *Opus*)   echo opus ;;
+        *Sonnet*) echo sonnet ;;
+        *Haiku*)  echo haiku ;;
+        *)        echo default ;;
+    esac
+}
+
 # Map a percentage to a color level name.
 usage_level() {
     local p=$1

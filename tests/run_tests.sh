@@ -39,6 +39,12 @@ assert_eq "$(usage_level 70)"  "orange" "70% -> orange"
 assert_eq "$(usage_level 90)"  "red"    "90% -> red"
 assert_eq "$(level_color red)" "$C_RED" "level_color red -> C_RED"
 
+# ---- Task 4: accent ----
+assert_eq "$(accent_level 'Opus 4.8 (1M context)')" "opus"    "Opus -> opus"
+assert_eq "$(accent_level 'Sonnet 4.6')"            "sonnet"  "Sonnet -> sonnet"
+assert_eq "$(accent_level 'Haiku 4.5')"             "haiku"   "Haiku -> haiku"
+assert_eq "$(accent_level 'Claude')"                "default" "unknown -> default"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
