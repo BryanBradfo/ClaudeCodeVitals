@@ -128,6 +128,9 @@ render()             # joins enabled segments with the separator, prints
 
 - **Per-segment toggles:** config-header booleans; `render()` skips disabled
   segments. (Lightweight version of config-driven; not a full data-array loop.)
+  **All segments default to ON**; the user trims via these toggles. `pr` and
+  `extra` additionally self-hide when their data is absent, so the line is
+  usually shorter than the full 10-segment maximum.
 - All numeric `printf`/`awk` use `LC_NUMERIC=C` to avoid the locale bug.
 
 ## Data sourcing
