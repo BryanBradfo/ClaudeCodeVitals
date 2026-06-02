@@ -177,6 +177,17 @@ seg_pr() {
     add "${C_WHITE}PR${C_RESET} ${C_DIM}#${C_RESET}${col}${PR_NUM}${PR_STATE:+ $label}${C_RESET}"
 }
 
+# Context bar + percent + used/total tokens; warns at the threshold.
+seg_context() {
+    [ "$SEG_CONTEXT" = 1 ] || return
+    local cur=$(( CTX_INPUT + CTX_CC + CTX_CR )) used total col
+    used=$(fmt_tokens "$cur"); total=$(fmt_tokens "$CTX_SIZE")
+    col=$(level_color "$(usage_level "$CTX_PCT")")
+    local s="${C_WHITE}ctx${C_RESET} $(make_bar "$CTX_PCT") ${col}${CTX_PCT}%${C_RESET} ${C_DIM}${used}/${total}${C_RESET}"
+    [ "$CTX_PCT" -ge "$CTX_WARN_THRESHOLD" ] && s+=" ${C_RED}${CTX_WARN_GLYPH}${C_RESET}"
+    add "$s"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns

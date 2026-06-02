@@ -122,6 +122,17 @@ assert_contains "$OUT" "$C_RED" "changes uses red"
 OUT=""; PR_NUM=""; PR_STATE=""; seg_pr
 assert_eq "$OUT" "" "no PR -> hidden"
 
+# ---- Task 13: seg_context ----
+OUT=""; CTX_PCT=8; CTX_SIZE=1000000; CTX_INPUT=40000; CTX_CC=20000; CTX_CR=19000; seg_context
+c="$(printf '%s' "$OUT" | strip)"
+assert_contains "$c" "ctx" "has ctx label"
+assert_contains "$c" "8%"  "shows percent"
+assert_contains "$c" "79k/1M" "shows used/total tokens"
+assert_not_contains "$c" "$CTX_WARN_GLYPH" "no warning below threshold"
+OUT=""; CTX_PCT=93; CTX_SIZE=1000000; CTX_INPUT=930000; CTX_CC=0; CTX_CR=0; seg_context
+c="$(printf '%s' "$OUT" | strip)"
+assert_contains "$c" "$CTX_WARN_GLYPH" "warning at >90%"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
