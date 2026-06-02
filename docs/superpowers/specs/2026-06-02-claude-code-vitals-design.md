@@ -43,6 +43,8 @@ Found by testing the original `statusline.sh` with sample input on this machine:
 - Easy to restyle (config header).
 - Developer-focused extras: context-pressure warning, model-aware accent,
   session cost.
+- A conversation-identity reminder and PR status, using fields confirmed
+  present in the statusline JSON (see Data sourcing).
 
 ## Non-goals (YAGNI)
 
@@ -50,6 +52,13 @@ Found by testing the original `statusline.sh` with sample input on this machine:
 - GitHub update-check / self-update mechanism (removed — one fewer network call).
 - Clock, CLI-version segment, active-toolchain (venv/node), git stash/untracked
   counts. Considered and dropped.
+- **Permission mode (plan / acceptEdits / auto / default).** Considered and
+  rejected: the live permission mode is **not** exposed in the statusline JSON
+  (confirmed against the official schema). The only readable value is
+  `permissions.defaultMode` in `settings.json`, which is the configured default
+  — not the live toggle state — so displaying it would be misleading. Omitted
+  rather than shown incorrectly. `thinking.enabled` and `vim.mode` are available
+  alternatives but were not selected for this version.
 
 ## Constraints
 
@@ -69,15 +78,17 @@ Refined Unicode, no special font. Segments separated by a dim middle dot
 
 ### Segment line (left to right)
 ```
-model · dir@branch[*][↑n ↓n][+N -M] · ctx BAR % tokens[⚠] · effort · 5h BAR % @reset · 7d BAR % @reset · extra $u/$l · $cost
+model · session · dir@branch[*][↑n ↓n][+N -M] · pr · ctx BAR % tokens[⚠] · effort · 5h BAR % @reset · 7d BAR % @reset · extra $u/$l · $cost
 ```
 
 ### Segments
 | Segment | Content | Notes |
 |---------|---------|-------|
 | **model** | e.g. `Opus 4.8 1M` | Accent color by family: Opus→purple, Sonnet→blue, Haiku→cyan. Uppercase `1M` (not `1m`). |
+| **session** | `session_name`, else short `session_id` (first 8 chars) | Conversation reminder. Prefixed with a font-safe dim marker (no Nerd Font glyph). Always shows (named or id). |
 | **git** | `dir@branch` + `*` dirty + `↑n ↓n` ahead/behind upstream + `+N -M` line stat | Folder name = basename of cwd. Branch green, dirty marker yellow, ahead/behind cyan, additions green / deletions red. Omitted when cwd is not a git repo. |
-| **ctx** | 3-cell bar + `%` + `used/total` tokens | Context window usage. Turns **red + appends `⚠`** at >90% (context-pressure warning). |
+| **pr** | `PR #<n>` + review state | From `pr.number` / `pr.review_state`. State color: approved→green, pending→yellow, changes_requested→red, draft→dim. Omitted when not on a PR branch. |
+| **ctx** | 3-cell bar + `%` + `used/total` tokens | Context window usage. Uses Claude Code's **pre-calculated `context_window.used_percentage`** (correct across the 200k/1M split). Turns **red + appends `⚠`** at >90% (context-pressure warning). |
 | **effort** | `low`/`med`/`high`/`xhigh`/`max` | Color-coded: low dim, med orange, high green, xhigh purple, max red. |
 | **5h** | 3-cell bar + `%` + `@HH:MM` reset | 5-hour rate limit. |
 | **7d** | 3-cell bar + `%` + `@Day Mon D` reset | 7-day rate limit. |
@@ -109,8 +120,8 @@ parse_input()        # ONE jq call → emits key=value lines → eval into shell
 helpers              # format_tokens(), usage_color(), make_bar(),
                      # iso_to_epoch(), format_reset_time(), get_oauth_token()
   ↓
-seg_model() seg_git() seg_context() seg_effort()
-seg_limits() seg_extra() seg_cost()   # each appends to the line if enabled
+seg_model() seg_session() seg_git() seg_pr() seg_context()
+seg_effort() seg_limits() seg_extra() seg_cost()   # each appends if enabled
   ↓
 render()             # joins enabled segments with the separator, prints
 ```
@@ -133,6 +144,13 @@ Reuse the original's proven strategy (minus the GitHub update check):
 4. **Session cost:** prefer `.cost.total_cost_usd` from stdin; else estimate.
 
 `curl --max-time 10`, network call only when cache is stale.
+
+**Read directly from stdin JSON (no API/computation needed):**
+- **Context %:** `.context_window.used_percentage` (pre-calculated).
+- **Session:** `.session_name` (optional) with fallback to `.session_id`
+  (truncated to 8 chars).
+- **PR:** `.pr.number` and `.pr.review_state` (both optional; segment omitted
+  when `.pr.number` is absent).
 
 ## Error handling
 
