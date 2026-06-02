@@ -204,6 +204,26 @@ seg_effort() {
     add "${C_WHITE}effort${C_RESET} ${col}${label}${C_RESET}"
 }
 
+# 5h and 7d rate-limit bars with reset times. Renders from builtin stdin values.
+seg_limits() {
+    [ "$SEG_LIMITS" = 1 ] || return
+    local p col r
+    if [ -n "$FH_PCT" ]; then
+        p=$(LC_NUMERIC=C awk "BEGIN{printf \"%d\", int($FH_PCT+0.5)}")
+        col=$(level_color "$(usage_level "$p")")
+        local s="${C_WHITE}5h${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
+        r=$(fmt_reset "$FH_RESET" time); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
+        add "$s"
+    fi
+    if [ -n "$SD_PCT" ]; then
+        p=$(LC_NUMERIC=C awk "BEGIN{printf \"%d\", int($SD_PCT+0.5)}")
+        col=$(level_color "$(usage_level "$p")")
+        local s="${C_WHITE}7d${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
+        r=$(fmt_reset "$SD_RESET" datetime); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
+        add "$s"
+    fi
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns

@@ -141,6 +141,16 @@ assert_eq "$(printf '%s' "$OUT" | strip)" "effort med" "medium -> med"
 OUT=""; EFFORT=""; seg_effort
 assert_eq "$(printf '%s' "$OUT" | strip)" "effort med" "empty -> default med"
 
+# ---- Task 15: seg_limits ----
+OUT=""; FH_PCT="42.5"; FH_RESET=0; SD_PCT="71.2"; SD_RESET=0; seg_limits
+l="$(printf '%s' "$OUT" | strip)"
+assert_contains "$l" "5h" "has 5h"
+assert_contains "$l" "43%" "5h rounds 42.5 -> 43"
+assert_contains "$l" "7d" "has 7d"
+assert_contains "$l" "71%" "7d rounds 71.2 -> 71"
+OUT=""; FH_PCT=""; SD_PCT=""; seg_limits
+assert_eq "$OUT" "" "no limit data -> nothing"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
