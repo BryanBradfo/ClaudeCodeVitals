@@ -42,6 +42,26 @@ bar_fill() {
     echo "$f"
 }
 
+# Map a percentage to a color level name.
+usage_level() {
+    local p=$1
+    if   [ "$p" -ge 90 ]; then echo red
+    elif [ "$p" -ge 70 ]; then echo orange
+    elif [ "$p" -ge 50 ]; then echo yellow
+    else echo green
+    fi
+}
+
+# Map a level name to a palette escape.
+level_color() {
+    case "$1" in
+        red)    printf '%s' "$C_RED" ;;
+        orange) printf '%s' "$C_ORANGE" ;;
+        yellow) printf '%s' "$C_YELLOW" ;;
+        *)      printf '%s' "$C_GREEN" ;;
+    esac
+}
+
 # Render a colored bar for a percentage.
 make_bar() {
     local p=$1 f i col

@@ -31,6 +31,14 @@ assert_eq "$(bar_fill 100)" "3" "bar_fill 100 -> 3"
 bar_out="$(make_bar 50 | strip)"
 assert_eq "$bar_out" "▰▰▱" "make_bar 50 renders 2 filled, 1 empty"
 
+# ---- Task 3: usage levels ----
+assert_eq "$(usage_level 0)"   "green"  "0% -> green"
+assert_eq "$(usage_level 49)"  "green"  "49% -> green"
+assert_eq "$(usage_level 50)"  "yellow" "50% -> yellow"
+assert_eq "$(usage_level 70)"  "orange" "70% -> orange"
+assert_eq "$(usage_level 90)"  "red"    "90% -> red"
+assert_eq "$(level_color red)" "$C_RED" "level_color red -> C_RED"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
