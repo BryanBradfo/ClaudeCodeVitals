@@ -90,6 +90,14 @@ SEG_MODEL=0; OUT=""; MODEL="Opus"; seg_model
 assert_eq "$OUT" "" "toggle off -> no output"
 SEG_MODEL=1
 
+# ---- Task 10: seg_session ----
+OUT=""; SESSION_NAME="demo"; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$OUT" | strip)" "»demo" "named session"
+OUT=""; SESSION_NAME=""; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$OUT" | strip)" "»abcd1234" "unnamed -> short id"
+OUT=""; SESSION_NAME=""; SESSION_ID=""; seg_session
+assert_eq "$OUT" "" "no session data -> nothing"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

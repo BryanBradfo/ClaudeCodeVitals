@@ -130,6 +130,14 @@ seg_model() {
     add "${col}${name}${C_RESET}"
 }
 
+# Conversation reminder: »name or »shortid.
+seg_session() {
+    [ "$SEG_SESSION" = 1 ] || return
+    local s; s=$(fmt_session "$SESSION_NAME" "$SESSION_ID")
+    [ -z "$s" ] && return
+    add "${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns
