@@ -162,6 +162,21 @@ seg_git() {
     add "$s"
 }
 
+# PR #<n> <state>. Hidden when no PR. changes_requested shown as "changes".
+seg_pr() {
+    [ "$SEG_PR" = 1 ] || return
+    [ -n "$PR_NUM" ] || return
+    local col label="$PR_STATE"
+    case "$PR_STATE" in
+        approved)          col=$C_GREEN ;;
+        pending)           col=$C_YELLOW ;;
+        changes_requested) col=$C_RED; label=changes ;;
+        draft)             col=$C_DIM ;;
+        *)                 col=$C_WHITE ;;
+    esac
+    add "${C_WHITE}PR${C_RESET} ${C_DIM}#${C_RESET}${col}${PR_NUM}${PR_STATE:+ $label}${C_RESET}"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns

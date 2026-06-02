@@ -112,6 +112,16 @@ assert_contains "$g" "-"        "deletions present"
 OUT=""; CWD="$T_CACHE"; seg_git   # not a git repo (cache dir itself)
 assert_eq "$OUT" "" "non-repo cwd -> git segment hidden"
 
+# ---- Task 12: seg_pr ----
+OUT=""; PR_NUM="142"; PR_STATE="pending"; seg_pr
+assert_eq "$(printf '%s' "$OUT" | strip)" "PR #142 pending" "pending PR"
+assert_contains "$OUT" "$C_YELLOW" "pending uses yellow"
+OUT=""; PR_NUM="142"; PR_STATE="changes_requested"; seg_pr
+assert_eq "$(printf '%s' "$OUT" | strip)" "PR #142 changes" "changes_requested -> changes label"
+assert_contains "$OUT" "$C_RED" "changes uses red"
+OUT=""; PR_NUM=""; PR_STATE=""; seg_pr
+assert_eq "$OUT" "" "no PR -> hidden"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
