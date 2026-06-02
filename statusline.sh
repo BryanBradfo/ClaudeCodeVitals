@@ -116,6 +116,20 @@ make_bar() {
     printf '%s' "$C_RESET"
 }
 
+# Model name with family accent; "(1M context)" suffix collapsed to "1M".
+seg_model() {
+    [ "$SEG_MODEL" = 1 ] || return
+    local name col
+    name=$(printf '%s' "$MODEL" | sed 's/ *(\([0-9.]*[kKmM]*\) context)/ \1/')
+    case "$(accent_level "$MODEL")" in
+        opus)   col=$C_PURPLE ;;
+        sonnet) col=$C_BLUE ;;
+        haiku)  col=$C_CYAN ;;
+        *)      col=$C_BLUE ;;
+    esac
+    add "${col}${name}${C_RESET}"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns

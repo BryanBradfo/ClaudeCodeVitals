@@ -80,6 +80,16 @@ INPUT='{"context_window":{"context_window_size":200000,"current_usage":{"input_t
 parse_input
 assert_eq "$CTX_PCT"  "50"                      "CTX_PCT computed when used_percentage absent"
 
+# ---- Task 9: seg_model ----
+OUT=""; MODEL="Opus 4.8 (1M context)"; seg_model
+assert_eq "$(printf '%s' "$OUT" | strip)" "Opus 4.8 1M" "seg_model strips (...context) and keeps 1M"
+assert_contains "$OUT" "$C_PURPLE" "Opus uses purple accent"
+OUT=""; MODEL="Sonnet 4.6"; seg_model
+assert_contains "$OUT" "$C_BLUE" "Sonnet uses blue accent"
+SEG_MODEL=0; OUT=""; MODEL="Opus"; seg_model
+assert_eq "$OUT" "" "toggle off -> no output"
+SEG_MODEL=1
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
