@@ -56,6 +56,14 @@ assert_eq "$(fmt_session 'refactor-auth' 'a3f9c1e2-dead-beef')" "refactor-auth" 
 assert_eq "$(fmt_session '' 'a3f9c1e2-dead-beef')"              "a3f9c1e2"      "no name -> short id"
 assert_eq "$(fmt_session '' '')"                                ""              "neither -> empty"
 
+# ---- Task 7: fmt_reset ----
+assert_eq "$(TZ=UTC fmt_reset 0 time)"     "00:00"        "epoch 0 time"
+assert_eq "$(TZ=UTC fmt_reset 0 date)"     "Jan 1"        "epoch 0 date"
+assert_eq "$(TZ=UTC fmt_reset 0 datetime)" "Thu Jan 1, 00:00" "epoch 0 datetime"
+assert_eq "$(fmt_reset '' time)"           ""             "empty -> empty"
+assert_eq "$(fmt_reset null time)"         ""             "null -> empty"
+assert_eq "$(TZ=UTC fmt_reset '1970-01-01T00:00:00Z' time)" "00:00" "ISO string accepted"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

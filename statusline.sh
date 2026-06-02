@@ -42,6 +42,20 @@ bar_fill() {
     echo "$f"
 }
 
+# Format a reset time (epoch int OR ISO string) to local time. style: time|datetime|date.
+fmt_reset() {
+    local v=$1 style=$2 epoch fmt
+    { [ -z "$v" ] || [ "$v" = null ]; } && return
+    if [[ "$v" =~ ^[0-9]+$ ]]; then epoch=$v; else epoch=$(date -d "$v" +%s 2>/dev/null); fi
+    [ -z "$epoch" ] && return
+    case "$style" in
+        time)     fmt='%H:%M' ;;
+        datetime) fmt='%a %b %-d, %H:%M' ;;
+        *)        fmt='%b %-d' ;;
+    esac
+    LC_TIME=C date -d "@$epoch" +"$fmt" 2>/dev/null
+}
+
 # Session label: name if set, else first 8 chars of id, else empty.
 fmt_session() {
     local name=$1 id=$2
