@@ -98,6 +98,20 @@ assert_eq "$(printf '%s' "$OUT" | strip)" "»abcd1234" "unnamed -> short id"
 OUT=""; SESSION_NAME=""; SESSION_ID=""; seg_session
 assert_eq "$OUT" "" "no session data -> nothing"
 
+# ---- Task 11: seg_git ----
+G="$T_CACHE/repo"; mkdir -p "$G"
+( cd "$G" && git init -q && git config user.email t@t && git config user.name t \
+  && printf 'a\nb\nc\n' > f.txt && git add f.txt && git commit -qm init \
+  && printf 'a\nB\nc\nd\n' > f.txt )   # 1 changed + 1 added line, working tree dirty
+OUT=""; CWD="$G"; seg_git
+g="$(printf '%s' "$OUT" | strip)"
+assert_contains "$g" "repo@"   "shows dir@branch"
+assert_contains "$g" "*"        "dirty marker present"
+assert_contains "$g" "+"        "additions present"
+assert_contains "$g" "-"        "deletions present"
+OUT=""; CWD="$T_CACHE"; seg_git   # not a git repo (cache dir itself)
+assert_eq "$OUT" "" "non-repo cwd -> git segment hidden"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

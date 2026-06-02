@@ -138,6 +138,30 @@ seg_session() {
     add "${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
 }
 
+# dir@branch [*dirty] [↑ahead ↓behind] [+add -del]. Hidden when cwd is not a repo.
+seg_git() {
+    [ "$SEG_GIT" = 1 ] || return
+    [ -n "$CWD" ] || return
+    local branch; branch=$(git -C "$CWD" rev-parse --abbrev-ref HEAD 2>/dev/null) || return
+    [ -n "$branch" ] || return
+    local dir="${CWD##*/}"
+    local s="${C_CYAN}${dir}${C_RESET}${C_DIM}@${C_RESET}${C_GREEN}${branch}${C_RESET}"
+    [ -n "$(git -C "$CWD" status --porcelain 2>/dev/null)" ] && s+="${C_YELLOW}*${C_RESET}"
+    local counts behind ahead
+    counts=$(git -C "$CWD" rev-list --left-right --count '@{upstream}...HEAD' 2>/dev/null)
+    if [ -n "$counts" ]; then
+        behind=$(printf '%s' "$counts" | awk '{print $1}')
+        ahead=$(printf '%s' "$counts" | awk '{print $2}')
+        [ "${ahead:-0}" -gt 0 ] 2>/dev/null && s+=" ${C_CYAN}↑${ahead}${C_RESET}"
+        [ "${behind:-0}" -gt 0 ] 2>/dev/null && s+="${C_CYAN}↓${behind}${C_RESET}"
+    fi
+    local stat; stat=$(git -C "$CWD" diff --numstat 2>/dev/null | awk '{a+=$1; d+=$2} END{if (a+d>0) printf "%d %d", a, d}')
+    if [ -n "$stat" ]; then
+        s+=" ${C_GREEN}+$(printf '%s' "$stat" | awk '{print $1}')${C_RESET} ${C_RED}-$(printf '%s' "$stat" | awk '{print $2}')${C_RESET}"
+    fi
+    add "$s"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns
