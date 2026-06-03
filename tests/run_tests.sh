@@ -173,7 +173,20 @@ assert_eq "$(printf '%s' "$OUT" | strip)" "\$1.27" "cost rounded to 2 dp"
 OUT=""; COST=""; seg_cost
 assert_eq "$OUT" "" "no cost -> hidden"
 
-# (more tests appended by later tasks)
+# ---- Task 18: full render ----
+full='{"model":{"display_name":"Opus 4.8 (1M context)"},"cwd":"'"$T_CACHE"'","session_name":"demo","session_id":"abcd1234","context_window":{"used_percentage":76,"context_window_size":1000000,"current_usage":{"input_tokens":760000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"effort":{"level":"xhigh"},"rate_limits":{"five_hour":{"used_percentage":54,"resets_at":0},"seven_day":{"used_percentage":93,"resets_at":0}},"pr":{"number":142,"review_state":"pending"},"cost":{"total_cost_usd":8.91}}'
+o="$(run_sl "$full" | strip)"
+assert_contains "$o" "Opus 4.8 1M" "model in full render"
+assert_contains "$o" "»demo"       "session in full render"
+assert_contains "$o" "PR #142 pending" "pr in full render"
+assert_contains "$o" "76%"         "context in full render"
+assert_contains "$o" "effort xhigh" "effort in full render"
+assert_contains "$o" "5h"          "5h in full render"
+assert_contains "$o" "7d"          "7d in full render"
+assert_contains "$o" " · "         "segments joined by separator"
+# Toggle: disabling a segment via env removes it.
+o="$(printf '%s' "$full" | SEG_PR=0 CCV_NO_FETCH=1 CCV_CACHE_DIR="$T_CACHE" bash "$SL" | strip)"
+assert_not_contains "$o" "PR #142" "SEG_PR=0 hides the PR segment"
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

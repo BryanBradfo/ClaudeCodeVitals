@@ -21,9 +21,10 @@ SESSION_MARK='»'
 CTX_WARN_THRESHOLD=90
 CTX_WARN_GLYPH='⚠'
 
-# Segment toggles (1=on, 0=off). All on by default.
-SEG_MODEL=1; SEG_SESSION=1; SEG_GIT=1; SEG_PR=1; SEG_CONTEXT=1
-SEG_EFFORT=1; SEG_LIMITS=1; SEG_EXTRA=1; SEG_COST=1
+# Segment toggles (1=on, 0=off). All on by default. Env-overridable.
+SEG_MODEL="${SEG_MODEL:-1}"; SEG_SESSION="${SEG_SESSION:-1}"; SEG_GIT="${SEG_GIT:-1}"
+SEG_PR="${SEG_PR:-1}"; SEG_CONTEXT="${SEG_CONTEXT:-1}"; SEG_EFFORT="${SEG_EFFORT:-1}"
+SEG_LIMITS="${SEG_LIMITS:-1}"; SEG_EXTRA="${SEG_EXTRA:-1}"; SEG_COST="${SEG_COST:-1}"
 
 # Cache (overridable for tests)
 CCV_CACHE_DIR="${CCV_CACHE_DIR:-/tmp/claude}"
@@ -328,10 +329,22 @@ parse_input() {
 
 # ===== MAIN =====
 main() {
-    set -f  # disable globbing
+    set -f
     INPUT=$(cat)
     if [ -z "$INPUT" ]; then printf 'Claude'; exit 0; fi
-    printf 'Claude'  # placeholder; replaced in Task 18
+    parse_input
+    load_usage
+    OUT=""
+    seg_model
+    seg_session
+    seg_git
+    seg_pr
+    seg_context
+    seg_effort
+    seg_limits
+    seg_extra
+    seg_cost
+    printf '%s' "$OUT"
 }
 
 # Run main only when executed directly, not when sourced by tests.
