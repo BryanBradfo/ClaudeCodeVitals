@@ -151,6 +151,22 @@ assert_contains "$l" "71%" "7d rounds 71.2 -> 71"
 OUT=""; FH_PCT=""; SD_PCT=""; seg_limits
 assert_eq "$OUT" "" "no limit data -> nothing"
 
+# ---- Task 16: load_usage + seg_extra ----
+mkdir -p "$T_CACHE"
+# cache hash uses sha256 of the config dir; load_usage computes the same path.
+cfg_hash=$(printf '%s' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}" | sha256sum | cut -c1-8)
+printf '%s' '{"five_hour":{"utilization":5,"resets_at":0},"seven_day":{"utilization":9,"resets_at":0},"extra_usage":{"is_enabled":true,"utilization":34,"used_credits":340,"monthly_limit":1000}}' \
+  > "$T_CACHE/statusline-usage-cache-${cfg_hash}.json"
+# Builtin present: extra still comes from cache; limits stay builtin.
+OUT=""; EXTRA_LINE=""; FH_PCT="12"; SD_PCT="34"; CCV_CACHE_DIR="$T_CACHE"; CCV_NO_FETCH=1; load_usage; seg_extra
+e="$(printf '%s' "$OUT" | strip)"
+assert_contains "$e" "extra" "extra label present"
+assert_contains "$e" "\$3.40/\$10.00" "extra credits formatted from cents"
+# Builtin absent: load_usage backfills FH_PCT/SD_PCT from cache utilization.
+OUT=""; EXTRA_LINE=""; FH_PCT=""; SD_PCT=""; FH_RESET=""; SD_RESET=""; CCV_CACHE_DIR="$T_CACHE"; CCV_NO_FETCH=1; load_usage
+assert_eq "$FH_PCT" "5" "FH_PCT backfilled from cache"
+assert_eq "$SD_PCT" "9" "SD_PCT backfilled from cache"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

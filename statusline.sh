@@ -224,6 +224,75 @@ seg_limits() {
     fi
 }
 
+# Resolve an OAuth token: env override, then Linux credentials file, then GNOME keyring.
+get_oauth_token() {
+    [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && { printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN"; return 0; }
+    local cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}" creds="$cfg/.credentials.json" t=""
+    if [ -f "$creds" ]; then
+        t=$(jq -r '.claudeAiOauth.accessToken // empty' "$creds" 2>/dev/null)
+        [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
+    fi
+    if command -v secret-tool >/dev/null 2>&1; then
+        local blob; blob=$(timeout 2 secret-tool lookup service "Claude Code-credentials" 2>/dev/null)
+        [ -n "$blob" ] && t=$(printf '%s' "$blob" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null)
+        [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
+    fi
+    printf ''
+}
+
+# Populate EXTRA_LINE and backfill FH/SD from cache or a fresh API fetch.
+load_usage() {
+    EXTRA_LINE=""
+    local _cache_dir="${CCV_CACHE_DIR:-/tmp/claude}"
+    mkdir -p "$_cache_dir" 2>/dev/null
+    local cfg_hash; cfg_hash=$(printf '%s' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}" | sha256sum | cut -c1-8)
+    local cache="$_cache_dir/statusline-usage-cache-${cfg_hash}.json"
+    local data="" fresh=0
+    if [ -s "$cache" ]; then
+        local mtime age; mtime=$(stat -c %Y "$cache" 2>/dev/null); age=$(( $(date +%s) - mtime ))
+        [ "$age" -lt "$CACHE_MAX_AGE" ] && fresh=1
+        data=$(cat "$cache" 2>/dev/null)
+    fi
+    # Fetch only when cache is stale, builtin limits are absent, and fetching is allowed.
+    if [ "$fresh" -ne 1 ] && [ -z "$FH_PCT" ] && [ "${CCV_NO_FETCH:-0}" != 1 ]; then
+        touch "$cache"  # stampede lock
+        local token; token=$(get_oauth_token)
+        if [ -n "$token" ]; then
+            local resp; resp=$(curl -s --max-time 10 \
+                -H "Accept: application/json" -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $token" -H "anthropic-beta: oauth-2025-04-20" \
+                "https://api.anthropic.com/api/oauth/usage" 2>/dev/null)
+            if [ -n "$resp" ] && printf '%s' "$resp" | jq -e '.five_hour' >/dev/null 2>&1; then
+                data="$resp"; printf '%s' "$resp" > "$cache"
+            fi
+        fi
+        [ -f "$cache" ] && [ ! -s "$cache" ] && rm -f "$cache"
+    fi
+    [ -z "$data" ] && return
+    # Backfill rate limits from cache/API when builtin values are absent.
+    if [ -z "$FH_PCT" ]; then
+        FH_PCT=$(printf '%s' "$data" | jq -r '.five_hour.utilization // empty' 2>/dev/null)
+        FH_RESET=$(printf '%s' "$data" | jq -r '.five_hour.resets_at // empty' 2>/dev/null)
+        SD_PCT=$(printf '%s' "$data" | jq -r '.seven_day.utilization // empty' 2>/dev/null)
+        SD_RESET=$(printf '%s' "$data" | jq -r '.seven_day.resets_at // empty' 2>/dev/null)
+    fi
+    # Build the extra-usage segment if enabled.
+    local enabled; enabled=$(printf '%s' "$data" | jq -r '.extra_usage.is_enabled // false' 2>/dev/null)
+    [ "$enabled" != true ] && return
+    local pct used limit
+    pct=$(printf '%s' "$data" | jq -r '.extra_usage.utilization // 0' | LC_NUMERIC=C awk '{printf "%.0f", $1}')
+    used=$(printf '%s' "$data" | jq -r '.extra_usage.used_credits // 0' | LC_NUMERIC=C awk '{printf "%.2f", $1/100}')
+    limit=$(printf '%s' "$data" | jq -r '.extra_usage.monthly_limit // 0' | LC_NUMERIC=C awk '{printf "%.2f", $1/100}')
+    EXTRA_LINE="${C_WHITE}extra${C_RESET} $(level_color "$(usage_level "$pct")")\$${used}/\$${limit}${C_RESET}"
+}
+
+# Append the extra-usage segment computed by load_usage.
+seg_extra() {
+    [ "$SEG_EXTRA" = 1 ] || return
+    [ -n "$EXTRA_LINE" ] || return
+    add "$EXTRA_LINE"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns
