@@ -209,14 +209,14 @@ seg_limits() {
     [ "$SEG_LIMITS" = 1 ] || return
     local p col r
     if [ -n "$FH_PCT" ]; then
-        p=$(LC_NUMERIC=C awk "BEGIN{printf \"%d\", int($FH_PCT+0.5)}")
+        p=$(LC_NUMERIC=C awk -v v="$FH_PCT" 'BEGIN{printf "%d", int(v+0.5)}')
         col=$(level_color "$(usage_level "$p")")
         local s="${C_WHITE}5h${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
         r=$(fmt_reset "$FH_RESET" time); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
         add "$s"
     fi
     if [ -n "$SD_PCT" ]; then
-        p=$(LC_NUMERIC=C awk "BEGIN{printf \"%d\", int($SD_PCT+0.5)}")
+        p=$(LC_NUMERIC=C awk -v v="$SD_PCT" 'BEGIN{printf "%d", int(v+0.5)}')
         col=$(level_color "$(usage_level "$p")")
         local s="${C_WHITE}7d${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
         r=$(fmt_reset "$SD_RESET" datetime); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
