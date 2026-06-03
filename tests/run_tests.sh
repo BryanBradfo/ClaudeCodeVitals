@@ -167,6 +167,12 @@ OUT=""; EXTRA_LINE=""; FH_PCT=""; SD_PCT=""; FH_RESET=""; SD_RESET=""; CCV_CACHE
 assert_eq "$FH_PCT" "5" "FH_PCT backfilled from cache"
 assert_eq "$SD_PCT" "9" "SD_PCT backfilled from cache"
 
+# ---- Task 17: seg_cost ----
+OUT=""; COST="1.2699"; seg_cost
+assert_eq "$(printf '%s' "$OUT" | strip)" "\$1.27" "cost rounded to 2 dp"
+OUT=""; COST=""; seg_cost
+assert_eq "$OUT" "" "no cost -> hidden"
+
 # (more tests appended by later tasks)
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

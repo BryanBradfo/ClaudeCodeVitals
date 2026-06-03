@@ -293,6 +293,14 @@ seg_extra() {
     add "$EXTRA_LINE"
 }
 
+# Session cost from .cost.total_cost_usd. Hidden when absent.
+seg_cost() {
+    [ "$SEG_COST" = 1 ] || return
+    [ -n "$COST" ] || return
+    local c; c=$(LC_NUMERIC=C printf '%.2f' "$COST" 2>/dev/null) || return
+    add "${C_WHITE}\$${C_RESET}${C_GREEN}${c}${C_RESET}"
+}
+
 # One jq pass: emit `KEY=value` shell assignments, then eval them into globals.
 parse_input() {
     local assigns
