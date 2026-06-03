@@ -298,7 +298,8 @@ seg_extra() {
 seg_cost() {
     [ "$SEG_COST" = 1 ] || return
     [ -n "$COST" ] || return
-    local c; c=$(LC_NUMERIC=C printf '%.2f' "$COST" 2>/dev/null) || return
+    local c; c=$(LC_NUMERIC=C awk -v v="$COST" 'BEGIN{printf "%.2f", v+0}' 2>/dev/null) || return
+    [ -z "$c" ] && return
     add "${C_WHITE}\$${C_RESET}${C_GREEN}${c}${C_RESET}"
 }
 

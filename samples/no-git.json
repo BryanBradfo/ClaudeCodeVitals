@@ -1,0 +1,1 @@
+{"model":{"display_name":"Haiku 4.5"},"cwd":"/tmp","session_id":"a3f9c1e2dead","context_window":{"used_percentage":31,"context_window_size":200000,"current_usage":{"input_tokens":62000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"effort":{"level":"low"},"cost":{"total_cost_usd":0.02}}

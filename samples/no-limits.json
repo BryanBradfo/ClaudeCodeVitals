@@ -1,0 +1,1 @@
+{"model":{"display_name":"Sonnet 4.6"},"cwd":"/tmp","session_name":"offline","session_id":"0011223344","context_window":{"used_percentage":47,"context_window_size":200000,"current_usage":{"input_tokens":94000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"effort":{"level":"medium"},"cost":{"total_cost_usd":1.27}}
