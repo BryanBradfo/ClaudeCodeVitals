@@ -60,7 +60,3 @@ separator, and per-segment on/off toggles (also overridable via env, e.g.
 
 `bash tests/run_tests.sh` runs unit + integration tests.
 `bash samples/run.sh` renders sample fixtures for visual review.
-
-## Credits
-
-Inspired by [daniel3303/ClaudeCodeStatusLine](https://github.com/daniel3303/ClaudeCodeStatusLine) (MIT). Independent rewrite. MIT licensed.
