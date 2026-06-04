@@ -181,10 +181,10 @@ seg_pr() {
 # Context bar + percent + used/total tokens; warns at the threshold.
 seg_context() {
     [ "$SEG_CONTEXT" = 1 ] || return
-    local cur=$(( CTX_INPUT + CTX_CC + CTX_CR )) used total col
+    local cur=$(( CTX_INPUT + CTX_CC + CTX_CR )) used total col s
     used=$(fmt_tokens "$cur"); total=$(fmt_tokens "$CTX_SIZE")
     col=$(level_color "$(usage_level "$CTX_PCT")")
-    local s="${C_WHITE}ctx${C_RESET} $(make_bar "$CTX_PCT") ${col}${CTX_PCT}%${C_RESET} ${C_DIM}${used}/${total}${C_RESET}"
+    s="${C_WHITE}ctx${C_RESET} $(make_bar "$CTX_PCT") ${col}${CTX_PCT}%${C_RESET} ${C_DIM}${used}/${total}${C_RESET}"
     [ "$CTX_PCT" -ge "$CTX_WARN_THRESHOLD" ] && s+=" ${C_RED}${CTX_WARN_GLYPH}${C_RESET}"
     add "$s"
 }
@@ -208,18 +208,18 @@ seg_effort() {
 # 5h and 7d rate-limit bars with reset times. Renders from builtin stdin values.
 seg_limits() {
     [ "$SEG_LIMITS" = 1 ] || return
-    local p col r
+    local p col r s
     if [ -n "$FH_PCT" ]; then
         p=$(LC_NUMERIC=C awk -v v="$FH_PCT" 'BEGIN{printf "%d", int(v+0.5)}')
         col=$(level_color "$(usage_level "$p")")
-        local s="${C_WHITE}5h${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
+        s="${C_WHITE}5h${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
         r=$(fmt_reset "$FH_RESET" time); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
         add "$s"
     fi
     if [ -n "$SD_PCT" ]; then
         p=$(LC_NUMERIC=C awk -v v="$SD_PCT" 'BEGIN{printf "%d", int(v+0.5)}')
         col=$(level_color "$(usage_level "$p")")
-        local s="${C_WHITE}7d${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
+        s="${C_WHITE}7d${C_RESET} $(make_bar "$p") ${col}${p}%${C_RESET}"
         r=$(fmt_reset "$SD_RESET" datetime); [ -n "$r" ] && s+=" ${C_DIM}@${r}${C_RESET}"
         add "$s"
     fi
@@ -228,7 +228,8 @@ seg_limits() {
 # Resolve an OAuth token: env override, then Linux credentials file, then GNOME keyring.
 get_oauth_token() {
     [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && { printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN"; return 0; }
-    local cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}" creds="$cfg/.credentials.json" t=""
+    local cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+    local creds="$cfg/.credentials.json" t=""
     if [ -f "$creds" ]; then
         t=$(jq -r '.claudeAiOauth.accessToken // empty' "$creds" 2>/dev/null)
         [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }

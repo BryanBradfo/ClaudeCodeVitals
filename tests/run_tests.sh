@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Self-contained test runner for ClaudeCodeVitals.
+# Many vars below (INPUT, SEG_*, CTX_*, *_RESET, …) are read by functions
+# sourced from statusline.sh, so shellcheck can't see their use across `source`.
+# shellcheck disable=SC2034
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SL="$HERE/../statusline.sh"

@@ -1,6 +1,8 @@
 # ClaudeCodeVitals — a beautiful Claude Code statusline
 
-A custom **Claude Code statusline** with live progress bars for context,
+[![CI](https://github.com/BryanBradfo/ClaudeCodeVitals/actions/workflows/ci.yml/badge.svg)](https://github.com/BryanBradfo/ClaudeCodeVitals/actions/workflows/ci.yml)
+
+A custom **[Claude Code](https://claude.com/fr/product/claude-code) statusline** with live progress bars for context,
 rate limits, and cost — plus model-aware accents, rich git, PR status, and a
 session reminder. Single Bash script, Linux, no Nerd Font required.
 
@@ -30,13 +32,23 @@ Linux, `jq`, `curl`, `git`, GNU coreutils. Claude Code with OAuth
 
 ## Install
 
-Point your `~/.claude/settings.json` at the script:
+Clone the repo and run the installer — it points `statusLine` at the script in
+your `~/.claude/settings.json`, preserving any other keys and backing up the
+existing file first:
+
+```bash
+git clone https://github.com/BryanBradfo/ClaudeCodeVitals.git
+cd ClaudeCodeVitals
+./install.sh
+```
+
+Prefer to wire it up by hand? Point your `~/.claude/settings.json` at the script:
 
 ```json
 { "statusLine": { "type": "command", "command": "/absolute/path/to/statusline.sh" } }
 ```
 
-Restart Claude Code.
+Either way, restart Claude Code (or start a new session) to see it.
 
 ## Configuration
 
