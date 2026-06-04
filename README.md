@@ -4,7 +4,10 @@ A custom **Claude Code statusline** with live progress bars for context,
 rate limits, and cost — plus model-aware accents, rich git, PR status, and a
 session reminder. Single Bash script, Linux, no Nerd Font required.
 
-![preview](#)  <!-- add a screenshot -->
+![ClaudeCodeVitals statusline preview](docs/preview.png)
+
+<sub>Four sample states rendered from `samples/run.sh` — context near limit, a
+fresh session, no-git on Haiku, and an API key with no rate-limit data.</sub>
 
 ## Segments
 
