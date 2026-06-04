@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # shellcheck, jq, bash, and coreutils are preinstalled on ubuntu-latest.
+      - name: shellcheck
+        run: shellcheck statusline.sh install.sh samples/run.sh tests/run_tests.sh
+
+      - name: tests
+        run: bash tests/run_tests.sh
