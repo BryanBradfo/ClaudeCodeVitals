@@ -93,13 +93,16 @@ SEG_MODEL=0; OUT=""; MODEL="Opus"; seg_model
 assert_eq "$OUT" "" "toggle off -> no output"
 SEG_MODEL=1
 
-# ---- Task 10: seg_session ----
-OUT=""; SESSION_NAME="demo"; SESSION_ID="abcd1234efgh"; seg_session
-assert_eq "$(printf '%s' "$OUT" | strip)" "»demo" "named session"
-OUT=""; SESSION_NAME=""; SESSION_ID="abcd1234efgh"; seg_session
-assert_eq "$(printf '%s' "$OUT" | strip)" "»abcd1234" "unnamed -> short id"
-OUT=""; SESSION_NAME=""; SESSION_ID=""; seg_session
-assert_eq "$OUT" "" "no session data -> nothing"
+# ---- Task 10: seg_session (renders to its own line via SESSION_OUT) ----
+SESSION_OUT=""; SESSION_NAME="demo"; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$SESSION_OUT" | strip)" "»demo" "named session"
+SESSION_OUT=""; SESSION_NAME=""; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$SESSION_OUT" | strip)" "»abcd1234" "unnamed -> short id"
+SESSION_OUT=""; SESSION_NAME=""; SESSION_ID=""; seg_session
+assert_eq "$SESSION_OUT" "" "no session data -> nothing"
+# seg_session must not touch the dense line (OUT).
+OUT="x"; SESSION_OUT=""; SESSION_NAME="demo"; SESSION_ID=""; seg_session
+assert_eq "$OUT" "x" "seg_session leaves OUT untouched"
 
 # ---- Task 11: seg_git ----
 G="$T_CACHE/repo"; mkdir -p "$G"
@@ -187,6 +190,12 @@ assert_contains "$o" "effort xhigh" "effort in full render"
 assert_contains "$o" "5h"          "5h in full render"
 assert_contains "$o" "7d"          "7d in full render"
 assert_contains "$o" " · "         "segments joined by separator"
+# Two-line layout: the dense line first, session alone on the last line.
+line1="$(run_sl "$full" | strip | sed -n '1p')"
+line2="$(run_sl "$full" | strip | sed -n '2p')"
+assert_contains    "$line1" "Opus 4.8 1M" "dense info on line 1"
+assert_not_contains "$line1" "»demo"       "session not on the dense line 1"
+assert_eq          "$line2" "»demo"        "session alone on line 2"
 # Toggle: disabling a segment via env removes it.
 o="$(printf '%s' "$full" | SEG_PR=0 CCV_NO_FETCH=1 CCV_CACHE_DIR="$T_CACHE" bash "$SL" | strip)"
 assert_not_contains "$o" "PR #142" "SEG_PR=0 hides the PR segment"

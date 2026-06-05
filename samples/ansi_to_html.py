@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """Render the statusline sample output as a styled HTML terminal card.
 
-Reads ANSI-colored text on stdin (truecolor fg `38;2;r;g;b`, dim `2`, reset
-`0`) and emits a self-contained HTML page for screenshotting.
+Reads `samples/run.sh` output on stdin: blocks delimited by `── name ──`
+headers, each followed by one or more ANSI-colored statusline lines (the
+statusline renders the dense info line plus the session name on its own line).
+Emits a self-contained HTML page for screenshotting.
+
+Handles truecolor fg `38;2;r;g;b`, dim `2`, and reset `0`.
 """
 import html
 import re
 import sys
 
 ESC = re.compile(r"\x1b\[([0-9;]*)m")
+HEADER = re.compile(r"^── (.+) ──$")
 
-ROWS = [
-    ("high usage", "context near limit, weekly cap hot"),
-    ("low usage", "fresh session, everything green"),
-    ("no git / Haiku", "outside a repo, cheap model"),
-    ("no limits / Sonnet", "API key, no rate-limit data"),
-]
+# Optional human hints per sample fixture (by basename); unknown → no hint.
+HINTS = {
+    "high-usage": "context near limit, weekly cap hot",
+    "low-usage": "fresh session, everything green",
+    "no-git": "outside a repo, cheap model",
+    "no-limits": "API key, no rate-limit data",
+}
 
 
 def line_to_html(line: str) -> str:
@@ -63,16 +69,29 @@ def line_to_html(line: str) -> str:
     return "".join(out)
 
 
+def parse_blocks(text: str):
+    """Yield (label, [content_line, ...]) for each `── label ──` block."""
+    label, lines = None, []
+    for raw in text.splitlines():
+        m = HEADER.match(raw)
+        if m:
+            if label is not None:
+                yield label, lines
+            label, lines = m.group(1), []
+        elif raw.strip():
+            lines.append(raw)
+    if label is not None:
+        yield label, lines
+
+
 def main() -> None:
-    raw = [l for l in sys.stdin.read().splitlines()
-           if l.strip() and not l.startswith("─")]
     cells = []
-    for idx, line in enumerate(raw):
-        label, hint = ROWS[idx] if idx < len(ROWS) else (f"case {idx+1}", "")
+    for label, lines in parse_blocks(sys.stdin.read()):
+        hint = HINTS.get(label, "")
+        bars = "\n".join(f'<div class="bar">{line_to_html(l)}</div>' for l in lines)
         cells.append(
             f'<div class="row"><div class="meta"><span class="tag">{html.escape(label)}</span>'
-            f'<span class="hint">{html.escape(hint)}</span></div>'
-            f'<div class="bar">{line_to_html(line)}</div></div>'
+            f'<span class="hint">{html.escape(hint)}</span></div>{bars}</div>'
         )
     body = "\n".join(cells)
     print(f"""<!doctype html><html><head><meta charset="utf-8"><style>
