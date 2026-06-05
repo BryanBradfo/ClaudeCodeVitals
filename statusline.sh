@@ -131,12 +131,13 @@ seg_model() {
     add "${col}${name}${C_RESET}"
 }
 
-# Conversation reminder: »name or »shortid.
+# Conversation reminder: »name or »shortid. Rendered on its own line (SESSION_OUT),
+# kept out of the dense OUT line so a long session name never crowds the info.
 seg_session() {
     [ "$SEG_SESSION" = 1 ] || return
     local s; s=$(fmt_session "$SESSION_NAME" "$SESSION_ID")
     [ -z "$s" ] && return
-    add "${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
+    SESSION_OUT="${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
 }
 
 # dir@branch [*dirty] [↑ahead ↓behind] [+add -del]. Hidden when cwd is not a repo.
@@ -336,7 +337,7 @@ main() {
     if [ -z "$INPUT" ]; then printf 'Claude'; exit 0; fi
     parse_input
     load_usage
-    OUT=""
+    OUT=""; SESSION_OUT=""
     seg_model
     seg_session
     seg_git
@@ -346,7 +347,14 @@ main() {
     seg_limits
     seg_extra
     seg_cost
-    printf '%s' "$OUT"
+    # Dense info on line 1; session name alone on line 2 (when present).
+    if [ -n "$OUT" ] && [ -n "$SESSION_OUT" ]; then
+        printf '%s\n%s' "$OUT" "$SESSION_OUT"
+    elif [ -n "$SESSION_OUT" ]; then
+        printf '%s' "$SESSION_OUT"
+    else
+        printf '%s' "$OUT"
+    fi
 }
 
 # Run main only when executed directly, not when sourced by tests.
