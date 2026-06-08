@@ -34,6 +34,9 @@ CACHE_MAX_AGE=60
 # Append a segment to OUT, inserting SEP when OUT is non-empty.
 add() { [ -n "$OUT" ] && OUT+="$SEP"; OUT+="$1"; }
 
+# Append to the second line (git, then session), inserting SEP when non-empty.
+add2() { [ -n "$LINE2" ] && LINE2+="$SEP"; LINE2+="$1"; }
+
 # Filled-cell count for a percentage (0..BAR_WIDTH), min 1 cell for any usage > 0.
 bar_fill() {
     local p=$1 w=$BAR_WIDTH f
@@ -131,16 +134,17 @@ seg_model() {
     add "${col}${name}${C_RESET}"
 }
 
-# Conversation reminder: »name or »shortid. Rendered on its own line (SESSION_OUT),
-# kept out of the dense OUT line so a long session name never crowds the info.
+# Conversation reminder: »name or »shortid. Lives on the second line, after the
+# git segment, so a long session name never crowds the dense info line.
 seg_session() {
     [ "$SEG_SESSION" = 1 ] || return
     local s; s=$(fmt_session "$SESSION_NAME" "$SESSION_ID")
     [ -z "$s" ] && return
-    SESSION_OUT="${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
+    add2 "${C_DIM}${SESSION_MARK}${C_RESET}${C_WHITE}${s}${C_RESET}"
 }
 
-# dir@branch [*dirty] [↑ahead ↓behind] [+add -del]. Hidden when cwd is not a repo.
+# dir@branch [*dirty] [↑ahead ↓behind] [+add -del], on the second line before the
+# session name. Hidden when cwd is not a repo.
 seg_git() {
     [ "$SEG_GIT" = 1 ] || return
     [ -n "$CWD" ] || return
@@ -161,7 +165,7 @@ seg_git() {
     if [ -n "$stat" ]; then
         s+=" ${C_GREEN}+$(printf '%s' "$stat" | awk '{print $1}')${C_RESET} ${C_RED}-$(printf '%s' "$stat" | awk '{print $2}')${C_RESET}"
     fi
-    add "$s"
+    add2 "$s"
 }
 
 # PR #<n> <state>. Hidden when no PR. changes_requested shown as "changes".
@@ -337,21 +341,23 @@ main() {
     if [ -z "$INPUT" ]; then printf 'Claude'; exit 0; fi
     parse_input
     load_usage
-    OUT=""; SESSION_OUT=""
+    OUT=""; LINE2=""
+    # Line 1 — dense info.
     seg_model
-    seg_session
-    seg_git
     seg_pr
     seg_context
     seg_effort
     seg_limits
     seg_extra
     seg_cost
-    # Dense info on line 1; session name alone on line 2 (when present).
-    if [ -n "$OUT" ] && [ -n "$SESSION_OUT" ]; then
-        printf '%s\n%s' "$OUT" "$SESSION_OUT"
-    elif [ -n "$SESSION_OUT" ]; then
-        printf '%s' "$SESSION_OUT"
+    # Line 2 — workspace: git, then the session name.
+    seg_git
+    seg_session
+    # Print line 1, then line 2 (when present); never an orphan blank line.
+    if [ -n "$OUT" ] && [ -n "$LINE2" ]; then
+        printf '%s\n%s' "$OUT" "$LINE2"
+    elif [ -n "$LINE2" ]; then
+        printf '%s' "$LINE2"
     else
         printf '%s' "$OUT"
     fi

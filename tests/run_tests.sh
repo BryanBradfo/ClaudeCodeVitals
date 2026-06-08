@@ -93,15 +93,15 @@ SEG_MODEL=0; OUT=""; MODEL="Opus"; seg_model
 assert_eq "$OUT" "" "toggle off -> no output"
 SEG_MODEL=1
 
-# ---- Task 10: seg_session (renders to its own line via SESSION_OUT) ----
-SESSION_OUT=""; SESSION_NAME="demo"; SESSION_ID="abcd1234efgh"; seg_session
-assert_eq "$(printf '%s' "$SESSION_OUT" | strip)" "»demo" "named session"
-SESSION_OUT=""; SESSION_NAME=""; SESSION_ID="abcd1234efgh"; seg_session
-assert_eq "$(printf '%s' "$SESSION_OUT" | strip)" "»abcd1234" "unnamed -> short id"
-SESSION_OUT=""; SESSION_NAME=""; SESSION_ID=""; seg_session
-assert_eq "$SESSION_OUT" "" "no session data -> nothing"
+# ---- Task 10: seg_session (renders to the second line via LINE2) ----
+LINE2=""; SESSION_NAME="demo"; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$LINE2" | strip)" "»demo" "named session"
+LINE2=""; SESSION_NAME=""; SESSION_ID="abcd1234efgh"; seg_session
+assert_eq "$(printf '%s' "$LINE2" | strip)" "»abcd1234" "unnamed -> short id"
+LINE2=""; SESSION_NAME=""; SESSION_ID=""; seg_session
+assert_eq "$LINE2" "" "no session data -> nothing"
 # seg_session must not touch the dense line (OUT).
-OUT="x"; SESSION_OUT=""; SESSION_NAME="demo"; SESSION_ID=""; seg_session
+OUT="x"; LINE2=""; SESSION_NAME="demo"; SESSION_ID=""; seg_session
 assert_eq "$OUT" "x" "seg_session leaves OUT untouched"
 
 # ---- Task 11: seg_git ----
@@ -109,14 +109,23 @@ G="$T_CACHE/repo"; mkdir -p "$G"
 ( cd "$G" && git init -q && git config user.email t@t && git config user.name t \
   && printf 'a\nb\nc\n' > f.txt && git add f.txt && git commit -qm init \
   && printf 'a\nB\nc\nd\n' > f.txt )   # 1 changed + 1 added line, working tree dirty
-OUT=""; CWD="$G"; seg_git
-g="$(printf '%s' "$OUT" | strip)"
+LINE2=""; CWD="$G"; seg_git
+g="$(printf '%s' "$LINE2" | strip)"
 assert_contains "$g" "repo@"   "shows dir@branch"
 assert_contains "$g" "*"        "dirty marker present"
 assert_contains "$g" "+"        "additions present"
 assert_contains "$g" "-"        "deletions present"
-OUT=""; CWD="$T_CACHE"; seg_git   # not a git repo (cache dir itself)
-assert_eq "$OUT" "" "non-repo cwd -> git segment hidden"
+LINE2=""; CWD="$T_CACHE"; seg_git   # not a git repo (cache dir itself)
+assert_eq "$LINE2" "" "non-repo cwd -> git segment hidden"
+# git writes to the second line, not the dense line.
+OUT=""; LINE2=""; CWD="$G"; seg_git
+assert_eq "$OUT" "" "seg_git leaves OUT untouched"
+# Line 2 assembles git first, then the session name.
+LINE2=""; CWD="$G"; SESSION_NAME="demo"; SESSION_ID=""; seg_git; seg_session
+l2="$(printf '%s' "$LINE2" | strip)"
+assert_contains "$l2" "repo@" "git present on line 2"
+assert_contains "$l2" "»demo" "session present on line 2"
+case "$l2" in *repo@*»demo*) PASS=$((PASS+1));; *) FAIL=$((FAIL+1)); printf 'FAIL: git precedes session on line 2\n  [%s]\n' "$l2";; esac
 
 # ---- Task 12: seg_pr ----
 OUT=""; PR_NUM="142"; PR_STATE="pending"; seg_pr
@@ -180,7 +189,7 @@ OUT=""; COST=""; seg_cost
 assert_eq "$OUT" "" "no cost -> hidden"
 
 # ---- Task 18: full render ----
-full='{"model":{"display_name":"Opus 4.8 (1M context)"},"cwd":"'"$T_CACHE"'","session_name":"demo","session_id":"abcd1234","context_window":{"used_percentage":76,"context_window_size":1000000,"current_usage":{"input_tokens":760000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"effort":{"level":"xhigh"},"rate_limits":{"five_hour":{"used_percentage":54,"resets_at":0},"seven_day":{"used_percentage":93,"resets_at":0}},"pr":{"number":142,"review_state":"pending"},"cost":{"total_cost_usd":8.91}}'
+full='{"model":{"display_name":"Opus 4.8 (1M context)"},"cwd":"'"$G"'","session_name":"demo","session_id":"abcd1234","context_window":{"used_percentage":76,"context_window_size":1000000,"current_usage":{"input_tokens":760000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"effort":{"level":"xhigh"},"rate_limits":{"five_hour":{"used_percentage":54,"resets_at":0},"seven_day":{"used_percentage":93,"resets_at":0}},"pr":{"number":142,"review_state":"pending"},"cost":{"total_cost_usd":8.91}}'
 o="$(run_sl "$full" | strip)"
 assert_contains "$o" "Opus 4.8 1M" "model in full render"
 assert_contains "$o" "»demo"       "session in full render"
@@ -190,12 +199,15 @@ assert_contains "$o" "effort xhigh" "effort in full render"
 assert_contains "$o" "5h"          "5h in full render"
 assert_contains "$o" "7d"          "7d in full render"
 assert_contains "$o" " · "         "segments joined by separator"
-# Two-line layout: the dense line first, session alone on the last line.
+# Two-line layout: dense info on line 1; git + session on line 2.
 line1="$(run_sl "$full" | strip | sed -n '1p')"
 line2="$(run_sl "$full" | strip | sed -n '2p')"
 assert_contains    "$line1" "Opus 4.8 1M" "dense info on line 1"
 assert_not_contains "$line1" "»demo"       "session not on the dense line 1"
-assert_eq          "$line2" "»demo"        "session alone on line 2"
+assert_not_contains "$line1" "repo@"       "git not on the dense line 1"
+assert_contains    "$line2" "repo@"        "git on line 2"
+assert_contains    "$line2" "»demo"        "session on line 2"
+case "$line2" in *repo@*»demo*) PASS=$((PASS+1));; *) FAIL=$((FAIL+1)); printf 'FAIL: git precedes session on line 2\n  [%s]\n' "$line2";; esac
 # Toggle: disabling a segment via env removes it.
 o="$(printf '%s' "$full" | SEG_PR=0 CCV_NO_FETCH=1 CCV_CACHE_DIR="$T_CACHE" bash "$SL" | strip)"
 assert_not_contains "$o" "PR #142" "SEG_PR=0 hides the PR segment"
