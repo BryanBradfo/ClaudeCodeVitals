@@ -13,16 +13,18 @@ fresh session, no-git on Haiku, and an API key with no rate-limit data.</sub>
 
 ## Segments
 
-Rendered on two lines — a dense info line, then the session name on its own:
+Rendered on two lines — a dense info line, then a workspace line with git and
+the session name:
 
 ```text
-model · git · pr · ctx · effort · 5h · 7d · extra · cost
-»session
+model · pr · ctx · effort · 5h · 7d · extra · cost
+git · »session
 ```
 
 - **model** — accent-colored by family (Opus/Sonnet/Haiku)
-- **session** — your `/rename`d session name (else a short id), on its own line so a long name never crowds the info
-- **git** — `dir@branch`, dirty `*`, `↑/↓` vs upstream, `+/-` diffstat
+- **git** — `dir@branch`, dirty `*`, `↑/↓` vs upstream, `+/-` diffstat; opens the second line
+- **session** — your `/rename`d session name (else a short id), after git on the second line so a long name never crowds the info
+- **pr** — PR number + review state (auto-hidden off a PR)
 - **pr** — PR number + review state (auto-hidden off a PR)
 - **ctx** — context bar + %, turns red with ⚠ above 90%
 - **effort** — reasoning effort
