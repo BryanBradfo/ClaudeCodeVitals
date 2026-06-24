@@ -1,19 +1,19 @@
-# ClaudeCodeVitals — a beautiful Claude Code statusline
+# ClaudeCodeVitals: a beautiful Claude Code statusline
 
 [![CI](https://github.com/BryanBradfo/ClaudeCodeVitals/actions/workflows/ci.yml/badge.svg)](https://github.com/BryanBradfo/ClaudeCodeVitals/actions/workflows/ci.yml)
 
 A custom **[Claude Code](https://claude.com/fr/product/claude-code) statusline** with live progress bars for context,
-rate limits, and cost — plus model-aware accents, rich git, PR status, and a
+rate limits, and cost, plus model-aware accents, rich git, PR status, and a
 session reminder. Single Bash script, Linux, no Nerd Font required.
 
 ![ClaudeCodeVitals statusline preview](docs/preview.png)
 
-<sub>Four sample states rendered from `samples/run.sh` — context near limit, a
+<sub>Four sample states rendered from `samples/run.sh`: context near limit, a
 fresh session, no-git on Haiku, and an API key with no rate-limit data.</sub>
 
 ## Segments
 
-Rendered on two lines — a dense info line, then a workspace line with git and
+Rendered on two lines: a dense info line, then a workspace line with git and
 the session name:
 
 ```text
@@ -21,16 +21,15 @@ model · pr · ctx · effort · 5h · 7d · extra · cost
 git · »session
 ```
 
-- **model** — accent-colored by family (Opus/Sonnet/Haiku)
-- **git** — `dir@branch`, dirty `*`, `↑/↓` vs upstream, `+/-` diffstat; opens the second line
-- **session** — your `/rename`d session name (else a short id), after git on the second line so a long name never crowds the info
-- **pr** — PR number + review state (auto-hidden off a PR)
-- **pr** — PR number + review state (auto-hidden off a PR)
-- **ctx** — context bar + %, turns red with ⚠ above 90%
-- **effort** — reasoning effort
-- **5h / 7d** — rate-limit bars with reset times
-- **extra** — overage credits ($used/$limit) when enabled
-- **cost** — session cost from Claude Code's reported usage
+- **model**: accent-colored by family (Opus/Sonnet/Haiku)
+- **git**: `dir@branch`, dirty `*`, `↑/↓` vs upstream, `+/-` diffstat; opens the second line
+- **session**: your `/rename`d session name (else a short id), after git on the second line so a long name never crowds the info
+- **pr**: PR number + review state (auto-hidden off a PR)
+- **ctx**: context bar + %, turns red with ⚠ above 90%
+- **effort**: reasoning effort
+- **5h / 7d**: rate-limit bars with reset times
+- **extra**: overage credits ($used/$limit) when enabled
+- **cost**: session cost from Claude Code's reported usage
 
 ## Requirements
 
@@ -39,7 +38,7 @@ Linux, `jq`, `curl`, `git`, GNU coreutils. Claude Code with OAuth
 
 ## Install
 
-Clone the repo and run the installer — it points `statusLine` at the script in
+Clone the repo and run the installer; it points `statusLine` at the script in
 your `~/.claude/settings.json`, preserving any other keys and backing up the
 existing file first:
 
