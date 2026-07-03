@@ -33,8 +33,8 @@ CACHE_MAX_AGE=60
 # Portability: this script uses GNU `date -d` and `stat -c`. On macOS/BSD those
 # flags don't exist, so prefer the GNU builds (gdate/gstat) when present —
 # install them with `brew install coreutils`. Falls back to plain date/stat.
-if command -v gdate >/dev/null 2>&1; then DATE_BIN=gdate; else DATE_BIN=date; fi
-if command -v gstat >/dev/null 2>&1; then STAT_BIN=gstat; else STAT_BIN=stat; fi
+if command -v gdate >/dev/null 2>&1; then DATE_BIN='gdate'; else DATE_BIN='date'; fi
+if command -v gstat >/dev/null 2>&1; then STAT_BIN='gstat'; else STAT_BIN='stat'; fi
 
 # ===== HELPERS =====
 # Append a segment to OUT, inserting SEP when OUT is non-empty.
@@ -243,8 +243,8 @@ get_oauth_token() {
     local cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
     local creds="$cfg/.credentials.json" t=""
     local timeout_bin=""
-    if command -v timeout >/dev/null 2>&1; then timeout_bin=timeout
-    elif command -v gtimeout >/dev/null 2>&1; then timeout_bin=gtimeout; fi
+    if command -v timeout >/dev/null 2>&1; then timeout_bin='timeout'
+    elif command -v gtimeout >/dev/null 2>&1; then timeout_bin='gtimeout'; fi
     if [ -f "$creds" ]; then
         t=$(jq -r '.claudeAiOauth.accessToken // empty' "$creds" 2>/dev/null)
         [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
