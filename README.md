@@ -33,8 +33,16 @@ git · »session
 
 ## Requirements
 
-Linux, `jq`, `curl`, `git`, GNU coreutils. Claude Code with OAuth
+Linux or macOS, `jq`, `curl`, `git`, GNU coreutils. Claude Code with OAuth
 (Pro/Max) for rate-limit and extra-usage data.
+
+On **macOS**, install GNU coreutils so the script finds `gdate`/`gstat` (it
+uses `date -d`/`stat -c`, which BSD lacks) and reads the OAuth token from the
+Keychain:
+
+```bash
+brew install coreutils
+```
 
 ## Install
 
