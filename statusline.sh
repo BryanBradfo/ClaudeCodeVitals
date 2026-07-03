@@ -30,6 +30,12 @@ SEG_LIMITS="${SEG_LIMITS:-1}"; SEG_EXTRA="${SEG_EXTRA:-1}"; SEG_COST="${SEG_COST
 CCV_CACHE_DIR="${CCV_CACHE_DIR:-/tmp/claude}"
 CACHE_MAX_AGE=60
 
+# Portability: this script uses GNU `date -d` and `stat -c`. On macOS/BSD those
+# flags don't exist, so prefer the GNU builds (gdate/gstat) when present —
+# install them with `brew install coreutils`. Falls back to plain date/stat.
+if command -v gdate >/dev/null 2>&1; then DATE_BIN=gdate; else DATE_BIN=date; fi
+if command -v gstat >/dev/null 2>&1; then STAT_BIN=gstat; else STAT_BIN=stat; fi
+
 # ===== HELPERS =====
 # Append a segment to OUT, inserting SEP when OUT is non-empty.
 add() { [ -n "$OUT" ] && OUT+="$SEP"; OUT+="$1"; }
@@ -50,14 +56,14 @@ bar_fill() {
 fmt_reset() {
     local v=$1 style=$2 epoch fmt
     { [ -z "$v" ] || [ "$v" = null ]; } && return
-    if [[ "$v" =~ ^[0-9]+$ ]]; then epoch=$v; else epoch=$(date -d "$v" +%s 2>/dev/null); fi
+    if [[ "$v" =~ ^[0-9]+$ ]]; then epoch=$v; else epoch=$("$DATE_BIN" -d "$v" +%s 2>/dev/null); fi
     [ -z "$epoch" ] && return
     case "$style" in
         time)     fmt='%H:%M' ;;
         datetime) fmt='%a %b %-d, %H:%M' ;;
         *)        fmt='%b %-d' ;;
     esac
-    LC_TIME=C date -d "@$epoch" +"$fmt" 2>/dev/null
+    LC_TIME=C "$DATE_BIN" -d "@$epoch" +"$fmt" 2>/dev/null
 }
 
 # Session label: name if set, else first 8 chars of id, else empty.
@@ -230,17 +236,26 @@ seg_limits() {
     fi
 }
 
-# Resolve an OAuth token: env override, then Linux credentials file, then GNOME keyring.
+# Resolve an OAuth token: env override, then credentials file, then OS keystore
+# (GNOME keyring via secret-tool on Linux, or the macOS Keychain via `security`).
 get_oauth_token() {
     [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && { printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN"; return 0; }
     local cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
     local creds="$cfg/.credentials.json" t=""
+    local timeout_bin=""
+    if command -v timeout >/dev/null 2>&1; then timeout_bin=timeout
+    elif command -v gtimeout >/dev/null 2>&1; then timeout_bin=gtimeout; fi
     if [ -f "$creds" ]; then
         t=$(jq -r '.claudeAiOauth.accessToken // empty' "$creds" 2>/dev/null)
         [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
     fi
     if command -v secret-tool >/dev/null 2>&1; then
-        local blob; blob=$(timeout 2 secret-tool lookup service "Claude Code-credentials" 2>/dev/null)
+        local blob; blob=$(${timeout_bin:+$timeout_bin 2} secret-tool lookup service "Claude Code-credentials" 2>/dev/null)
+        [ -n "$blob" ] && t=$(printf '%s' "$blob" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null)
+        [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
+    fi
+    if command -v security >/dev/null 2>&1; then
+        local blob; blob=$(${timeout_bin:+$timeout_bin 2} security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null)
         [ -n "$blob" ] && t=$(printf '%s' "$blob" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null)
         [ -n "$t" ] && [ "$t" != null ] && { printf '%s' "$t"; return 0; }
     fi
@@ -256,7 +271,7 @@ load_usage() {
     local cache="$_cache_dir/statusline-usage-cache-${cfg_hash}.json"
     local data="" fresh=0
     if [ -s "$cache" ]; then
-        local mtime age; mtime=$(stat -c %Y "$cache" 2>/dev/null); age=$(( $(date +%s) - mtime ))
+        local mtime age; mtime=$("$STAT_BIN" -c %Y "$cache" 2>/dev/null); age=$(( $(date +%s) - ${mtime:-0} ))
         [ "$age" -lt "$CACHE_MAX_AGE" ] && fresh=1
         data=$(cat "$cache" 2>/dev/null)
     fi
