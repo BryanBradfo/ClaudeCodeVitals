@@ -56,6 +56,14 @@ cd ClaudeCodeVitals
 ./install.sh
 ```
 
+This points `statusLine` at the script inside the clone, so a `git pull` keeps
+your status line up to date. If you'd rather the status line survive deleting
+the clone, install a standalone copy into your config dir instead:
+
+```bash
+./install.sh --copy   # copies statusline.sh into ~/.claude and points there
+```
+
 Prefer to wire it up by hand? Point your `~/.claude/settings.json` at the script:
 
 ```json
